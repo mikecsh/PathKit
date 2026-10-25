@@ -4,6 +4,10 @@
 import Glibc
 
 let system_glob = Glibc.glob
+#elseif os(Android)
+import Android
+
+let system_glob = Android.glob
 #else
 import Darwin
 
@@ -587,6 +591,11 @@ extension Path {
 
 extension Path {
   public static func glob(_ pattern: String) -> [Path] {
+#if os(Android)
+    // Bionic's glob_t memory layout differs from glibc/Darwin and PeerMedicine
+    // does not rely on filesystem globbing, so this is stubbed on Android.
+    return []
+#else
     var gt = glob_t()
     guard let cPattern = strdup(pattern) else {
       fatalError("strdup returned null: Likely out of memory")
@@ -614,6 +623,7 @@ extension Path {
 
     // GLOB_NOMATCH
     return []
+#endif
   }
 
   public func glob(_ pattern: String) -> [Path] {
